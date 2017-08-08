@@ -33,12 +33,14 @@ def download_ep(title, ep_url):
     d = pq(url=ep_url)
     dm = d('#main > div > a')
     video_url = dm.attr('href')
+    filename = exec_command('youtube-dl -e %s' % video_url).stdout
+    output_name = os.path.join(title, filename).strip()
+    if video_url is None:
+        return
     try:
         os.mkdir(title)
     except:
         pass
-    filename = exec_command('youtube-dl -e %s' % video_url).stdout
-    output_name = os.path.join(title, filename).strip()
     print("output_name", output_name)
     os.system('youtube-dl --socket-timeout 30 %s -o "%s.mp4"' % (video_url, output_name))
 
