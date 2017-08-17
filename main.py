@@ -18,9 +18,10 @@ def exec_command(cmd, timeout=None):
     return res
 
 
-def get_drama_list():
-    d = pq(url=url+"/jp")
-    div = d('#nav > div:nth-child(7) > ul').find('li > h4 > a').items()
+def get_drama_list(type="jp"):
+    d = pq(url=url+"/"+type)
+    ul = d('#nav > div:nth-child(5) > ul')
+    div = ul.find('li > h4 > a').items()
 
     drama_list = list()
     for d in div:
@@ -29,7 +30,9 @@ def get_drama_list():
     return drama_list
 
 
-def download_ep(title, ep_url):
+def download_ep(title_ep_url):
+    title = title_ep_url[0]
+    ep_url = title_ep_url[1]
     d = pq(url=ep_url)
     dm = d('#main > div > a')
     video_url = dm.attr('href')
@@ -46,7 +49,9 @@ def download_ep(title, ep_url):
 
 
 def download_dramas(drama_url):
+    result = list()
     d = pq(url=drama_url)
+
 
     try:
         title = d('#main > div.item-page > h1').text().encode('iso-8859-1')
@@ -56,12 +61,32 @@ def download_dramas(drama_url):
 
     ep_list = d('#top > ul > li > a').items()
     for ep in ep_list:
-        download_ep(title, drama_url+ep.attr('href'))
+        try:
+            href = ep.attr('href')
+            result.append((title, drama_url + href))
+            # download_ep(title, drama_url + href)
+        except:
+            pass
+    return result
+
 
 
 if __name__ == "__main__":
     pool = Pool(processes=32)
-    drama_list = get_drama_list()
-    pool.map(download_dramas, drama_list)
+    if len(sys.argv) != 2:
+        sys.exit()
+
+    type = sys.argv[1]
+    drama_list = get_drama_list(type)
+    # pool.map(download_dramas, drama_list)
+    all_eps = list()
+    for drama in drama_list:
+        eps = download_dramas(drama)
+        if eps:
+            all_eps = all_eps + eps
+
+
+    pool.map(download_ep, all_eps)
+
 
 
